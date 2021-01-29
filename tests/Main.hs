@@ -68,7 +68,7 @@ aeqQCs = testGroup "AEQ QC tests" (map f impls)
 nfRandomTests :: IO TestTree
 nfRandomTests = do
   inputs <- getTerms "lams/random.lam"
-  outputs <- getTerms "lams/random.nf2.lam"
+  outputs <- getTerms "lams/random.nf.lam"
   let test_impl :: LambdaImpl -> LC IdInt -> LC IdInt -> TestTree
       test_impl LambdaImpl {..} tm1 tm2 = do
         let result = (impl_toLC . impl_nf . impl_fromLC) tm1
