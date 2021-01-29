@@ -31,20 +31,34 @@ impl = LambdaImpl {
          , impl_aeq    = (==)
       }
 
--- Semantic values are either
--- 1. Done
--- 2. Closures which don't wait for a value.
--- 3. Or do.
---
+-- Semantic values.
 data Sem b where
     Done :: DB b                                   -> Sem b
+    -- three ways to represent lambdas.
+    -- 1. a value which doesn't use binding
+    -- 2. a closure
+    -- 3. a Hoas (which we don't use, but could for primitive operations).
+    --
     Skip :: Sem b                                  -> Sem b
-    Clos :: (forall a. (b -> a) -> Sem a -> Sem a) -> Sem b
+    Clos :: Closure b                              -> Sem b
+    Hoas :: (forall a. (b -> a) -> Sem a -> Sem a) -> Sem b
+
+-- This is used often.
+var0 :: Sem (Var () a)
+var0 = Done (DVar (B ()))
 
 instance Functor Sem where
     fmap f (Done d) = Done (fmap f d)
     fmap f (Skip g) = Skip (fmap f g)
-    fmap f (Clos g) = Clos $ \ren sem -> g (ren . f) sem
+    fmap f (Clos c) = Clos (fmap f c)
+    fmap f (Hoas g) = Hoas $ \ren sem -> g (ren . f) sem
+
+-- | Closure of environment and a (lambda) body.
+data Closure a where
+    Closure :: Env a b -> DB (Var () a) -> Closure b
+
+instance Functor Closure where
+    fmap f (Closure env d) = Closure (fmap f env) d
 
 -- | Semantic environments
 data Env a b where
@@ -64,42 +78,48 @@ look (Ext _   sem) (B ~())  = sem
 -- Lowering semantic values to concrete syntax.
 -- 1. Done is trivial.
 -- 2. Skip we can efficiently lift
--- 3. Otherwise we build a lambda in "ordinary" NbE approach.
+-- 3. Closures are converted to scope by instantiting them,
+--    and then lowering that.
+-- 4. Otherwise we build a lambda in "ordinary" NbE approach.
 --
 lower :: Sem a -> DB a
-lower (Done x) = x
-lower (Skip f) = DLam $ lift $ lower f
-lower (Clos f) = DLam $ toScope $ lower $ f F (Done (DVar (B ())))
+lower (Done x)     = x
+lower (Skip f)     = DLam $ lift $ lower f
+lower (Clos c)     = DLam $ closureToScope c
+lower (Hoas f)     = DLam $ toScope $ lower $ f F var0
+
+closureToScope :: Closure a -> Scope () DB a
+closureToScope (Closure env d) = toScope $ lower $ eval (Ext (fmap F env) var0) d
 
 nf :: LC IdInt -> LC IdInt
 nf = fromDB . nfd . toDB
 
-eval2 :: Env a b -> DB a -> Sem b
-eval2 env (DVar x) = look env x
+-- instantiation of closure
+inst :: Closure b -> Sem b -> Sem b
+inst (Closure env f) x = eval (Ext env x) f
 
--- Function application has three cases
+-- Function application has four cases
 -- 1. When head is done, lower.eval the argument
 -- 2. If skip, we don't need argument
--- 3. Otherwise apply closure.
+-- 3. If closure, instantiate
+-- 4. Otherwise apply closure.
 --
-eval2 env (DApp f t) = case eval2 env f of
-    Done f' -> Done (DApp f' (lower t'))
+app :: Sem a -> Sem a -> Sem a
+app f t = case f of
+    Done f' -> Done (DApp f' (lower t))
     Skip f' -> f'
-    Clos g  -> g id t'
-  where
-    t' = eval2 env t
+    Clos c  -> inst c t
+    Hoas g  -> g id t
 
+eval :: Env a b -> DB a -> Sem b
+eval env (DVar x)                    = look env x
+eval env (DApp f t)                  = app (eval env f) (eval env t)
 -- In lambda abstraction we recognise Scoped (DVar ..) case
--- 1. it's either a lift, then we make a Skip semantic value.
--- 2. or it is an identity, then we use t
--- Otherwise we fallback to "ordinary" NbE encoding
+-- If it's a lift, we make a Skip value
+-- Otherwise we fallback to making a closure.
 --
-eval2 env (DLam (Scope (DVar (F b)))) = Skip $
-    eval2 env b
-eval2 env (DLam (Scope (DVar (B x)))) = Clos $ \_ren t ->
-    t
-eval2 env (DLam b) = Clos $ \ren t ->
-    eval2 (Ext (fmap ren env) t) (fromScope b)
+eval env (DLam (Scope (DVar (F b)))) = Skip $ eval env b
+eval env (DLam b)                    = Clos (Closure env (fromScope b))
 
 nfd :: DB a -> DB a
-nfd = lower . eval2 (Nil id)
+nfd = lower . eval (Nil id)
