@@ -27,6 +27,7 @@ library
       IdInt.Map
       IdInt.Set
       Impl.BoundDB
+      Impl.BoundNbE
       Impl.DeBruijn
       Impl.HOAS
       Impl.NominalG
@@ -62,6 +63,7 @@ library
                 , QuickCheck >= 2.13.2
                 , RepLib >= 0.5.4.2
                 , bound
+                , transformers
                 , containers
                 , deepseq >= 1.4.4.0
                 , deriving-compat
