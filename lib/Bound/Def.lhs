@@ -4,7 +4,7 @@ using de Bruijn indicies.
 > {-# LANGUAGE DeriveGeneric #-}
 > {-# LANGUAGE DeriveTraversable #-}
 > {-# LANGUAGE StandaloneDeriving #-}
-> module Impl.BoundDB(nf,Impl.BoundDB.aeq,toDB,fromDB,nfd, impl, DB (..)) where
+> module Bound.Def(nf,Bound.Def.aeq,toDB,fromDB,nfd, impl, DB (..)) where
 > import Lambda
 > import IdInt
 > import Data.Functor.Classes (Eq1(..))
@@ -18,7 +18,7 @@ using de Bruijn indicies.
 > import Impl
 > impl :: LambdaImpl
 > impl = LambdaImpl {
->            impl_name   = "Bound"
+>            impl_name   = "Bound.Def"
 >          , impl_fromLC = toDB
 >          , impl_toLC   = fromDB
 >          , impl_nf     = nfd

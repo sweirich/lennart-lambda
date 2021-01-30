@@ -13,8 +13,9 @@ import DeBruijnPar.P
 import DeBruijnPar.Scoped
 import IdInt
 import Impl
-import Impl.BoundDB
-import Impl.BoundNbE
+import Bound.Def
+import Bound.NbE
+import Bound.NbEClos
 import Impl.DeBruijn
 import Impl.HOAS
 import Impl.Kit
@@ -36,8 +37,9 @@ impls =
     DeBruijnPar.B.impl,
     DeBruijnPar.Scoped.impl,
     Impl.DeBruijn.impl,
-    Impl.BoundDB.impl,
-    Impl.BoundNbE.impl,
+    Bound.Def.impl,
+    Bound.NbE.impl,
+    Bound.NbEClos.impl,
     Impl.HOAS.impl,
     Impl.Kit.impl,
     Impl.SimpleB.impl,
