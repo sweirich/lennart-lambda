@@ -26,7 +26,6 @@ library
       IdInt
       IdInt.Map
       IdInt.Set
-      Impl.BoundDB
       Impl.DeBruijn
       Impl.HOAS
       Impl.NominalG
@@ -37,6 +36,9 @@ library
       Impl.UnboundGenerics
       Impl.DeBruijnC
       Impl.Kit
+      Bound.Def
+      Bound.NbE
+      Bound.NbEClos
       DeBruijnPar.P
       DeBruijnPar.B
       DeBruijnPar.F
@@ -62,6 +64,7 @@ library
                 , QuickCheck >= 2.13.2
                 , RepLib >= 0.5.4.2
                 , bound
+                , transformers
                 , containers
                 , deepseq >= 1.4.4.0
                 , deriving-compat

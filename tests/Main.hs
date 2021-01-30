@@ -68,7 +68,7 @@ aeqQCs = testGroup "AEQ QC tests" (map f impls)
 nfRandomTests :: IO TestTree
 nfRandomTests = do
   inputs <- getTerms "lams/random.lam"
-  outputs <- getTerms "lams/random.nf2.lam"
+  outputs <- getTerms "lams/random.nf.lam"
   let test_impl :: LambdaImpl -> LC IdInt -> LC IdInt -> TestTree
       test_impl LambdaImpl {..} tm1 tm2 = do
         let result = (impl_toLC . impl_nf . impl_fromLC) tm1
@@ -84,7 +84,7 @@ nfRandomTests = do
               (db_aeq tm2 result)
           )
   return $
-    testGroup "NF Unit Tests" $
+    testGroup "NF Random Unit Tests" $
       map (\i -> testGroup (impl_name i) $ zipWith (test_impl i) inputs outputs) impls
 
 ------------------------------------------------------------------------------
@@ -136,7 +136,7 @@ nfUnitTests = do
         let result = (impl_toLC . impl_nf . impl_fromLC) tm1
         assertBool ("nf produced: " ++ show result) (db_aeq lambdaFalse result)
   return $
-    testGroup "NF Unit Tests" $
+    testGroup "NF Lennart Lambda Tests" $
       map (\i -> testCase (impl_name i) $ test_impl i) impls
 
 -- test the correctness by normalizing the benchmarking term
